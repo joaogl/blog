@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use \jlourenco\support\Database\Blueprint;
 
 class CreateBlogTables extends Migration
 {
@@ -16,6 +16,7 @@ class CreateBlogTables extends Migration
         Schema::create('BlogCategory', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name', 100);
+            $table->string('slug', 100);
             $table->string('description', 250);
 
             $table->timestamps();
@@ -23,9 +24,14 @@ class CreateBlogTables extends Migration
             $table->creation();
         });
 
+        Schema::table('BlogCategory', function (Blueprint $table) {
+            $table->creationRelation();
+        });
+
         Schema::create('BlogPost', function (Blueprint $table) {
             $table->increments('id');
             $table->string('title', 100);
+            $table->string('slug', 100);
             $table->text('contents');
             $table->integer('category')->unsigned();
             $table->integer('author')->unsigned();
@@ -40,6 +46,10 @@ class CreateBlogTables extends Migration
 
             $table->foreign('category')->references('id')->on('BlogCategory');
             $table->foreign('author')->references('id')->on('User');
+        });
+
+        Schema::table('BlogPost', function (Blueprint $table) {
+            $table->creationRelation();
         });
 
     }
