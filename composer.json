@@ -17,8 +17,8 @@
         }
     ],
     "require": {
-        "illuminate/support": "~5.1",
-        "php" : ">=5.4.0"
+        "jlourenco/base" : "0.1.*"
+        "jlourenco/comments" : "0.1.*"
     },
     "require-dev": {
         "phpunit/phpunit" : "4.*",

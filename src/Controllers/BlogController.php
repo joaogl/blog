@@ -7,9 +7,24 @@ use Blog;
 use Sentinel;
 use DB;
 use Searchy;
+use Validator;
+use Input;
+use Comments;
+use Base;
+use Lang;
+use Redirect;
 
 class BlogController extends Controller
 {
+
+    /**
+     * Declare the rules for the form validation
+     *
+     * @var array
+     */
+    protected $validationRules = array(
+        'comment'               => 'required|min:3',
+    );
 
     /**
      * Show the posts.
@@ -18,34 +33,17 @@ class BlogController extends Controller
      */
     public function index()
     {
-        $posts = Blog::getPostsRepository()->all();
-        $categories = Blog::getCategoriesRepository()->all();
+        $posts = Blog::getPostsRepository()->OrderBy('created_at')->get();
+        $categories = Blog::getCategoriesRepository()->OrderBy('created_at')->get();
+        $subTitle = null;
 
-        return view('public.blog.list', compact('posts', 'categories'));
-    }
-
-    public function edit($id)
-    {
-        $post = Blog::getPostsRepository()->findOrFail($id);
-
-        return view('public.blog.edit', compact('post'));
-    }
-
-    public function update($id, Request $request)
-    {
-        $this->validate($request, [ 'value' => 'required' ]);
-
-        $move = Blog::getPostsRepository()->findOrFail($id);
-
-        $move->update($request->all());
-
-        return redirect('blog');
+        return view('public.blog.list', compact('posts', 'categories', 'subTitle'));
     }
 
     public function show($id)
     {
         $post = Blog::getPostsRepository()->findOrFail($id);
-        $categories = Blog::getCategoriesRepository()->all();
+        $categories = Blog::getCategoriesRepository()->OrderBy('created_at')->get();
 
         // Show the page
         return View('public.blog.post', compact('post', 'categories'));
@@ -55,10 +53,11 @@ class BlogController extends Controller
     {
         $category = Blog::getCategoriesRepository()->findOrFail($id);
         $posts = $category->posts;
-        $categories = Blog::getCategoriesRepository()->all();
+        $categories = Blog::getCategoriesRepository()->OrderBy('created_at')->get();
+        $subTitle = $category->name;
 
         // Show the page
-        return view('public.blog.list', compact('posts', 'categories'));
+        return view('public.blog.list', compact('posts', 'categories', 'subTitle'));
     }
 
     public function search($in)
@@ -111,16 +110,56 @@ class BlogController extends Controller
         return $repo;
     }
 
-    /*
-     * Admin section
+    /**
+     * Post comment form processing.
+     *
+     * @return Redirect
      */
-    public function getAdminIndex()
+    public function postComment($id)
     {
-        // Grab all the users
-        $posts = Blog::getPostsRepository()->all();
+        // Get the post information
+        $post = Blog::getPostsRepository()->find($id);
 
-        // Show the page
-        return View('admin.blog.list', compact('posts'));
+        if ($post == null)
+        {
+            // Prepare the error message
+            $error = Lang::get('blog.posts.not_found');
+
+            // Redirect to the post management page
+            return Redirect('blog')->with('error', $error);
+        }
+
+        // Create a new validator instance from our validation rules
+        $validator = Validator::make(Input::all(), $this->validationRules);
+
+        // If validation fails, we'll exit the operation now.
+        if ($validator->fails()) {
+            // Ooops.. something went wrong
+            return Redirect::back()->withInput()->withErrors($validator);
+        }
+
+        // Create the comment
+        $c = Comments::getCommentsRepository()->createModel();
+
+        $c->parent = null;
+        $c->comment = Input::get('comment');
+
+        // Was the post updated?
+        if ($post->comments()->save($c))
+        {
+            Base::Log('Comment added to (' . $post->id . ').');
+
+            // Prepare the success message
+            $success = Lang::get('blog.comment.created');
+
+            // Redirect to the user page
+            return Redirect('blog/' . $post->id)->with('success', $success);
+        }
+
+        $error = Lang::get('blog.comment.error');
+
+        // Redirect to the post page
+        return Redirect('blog/' . $post->id)->withInput()->with('error', $error);
     }
-
+    
 }

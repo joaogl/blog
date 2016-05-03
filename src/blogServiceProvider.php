@@ -28,6 +28,7 @@ class blogServiceProvider extends ServiceProvider
         $this->registerBlogCategory();
         $this->registerBlogPost();
         $this->registerBlog();
+        $this->registerToAppConfig();
     }
 
     /**
@@ -60,8 +61,12 @@ class blogServiceProvider extends ServiceProvider
 
         // Publish our routes
         $this->publishes([
-            __DIR__ .  '/routes.php' => base_path("app/Http/base_routes.php")
+            __DIR__ .  '/routes.php' => base_path("app/Http/blog_routes.php")
         ], 'routes');
+
+        // Include the routes file
+        if(file_exists(base_path("app/Http/blog_routes.php")))
+            include base_path("app/Http/blog_routes.php");
     }
 
     /**
@@ -123,6 +128,21 @@ class blogServiceProvider extends ServiceProvider
         });
 
         $this->app->alias('blog', 'jlourenco\blog\Blog');
+    }
+
+    /**
+     * Registers this module to the
+     * services providers and aliases.
+     *
+     * @return void
+     */
+    protected function registerToAppConfig()
+    {
+        /*
+         * Create aliases for the dependencies.
+         */
+        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+        $loader->alias('Blog', 'jlourenco\blog\Facades\Blog');
     }
 
     /**

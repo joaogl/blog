@@ -1,7 +1,11 @@
 <?php namespace jlourenco\blog\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use jlourenco\comments\Traits\Commentable;
 use jlourenco\support\Traits\Creation;
+use jlourenco\support\Traits\Sluggable;
+use Sentinel;
 
 class BlogPost extends Model
 {
@@ -10,6 +14,12 @@ class BlogPost extends Model
      * To allow user actions identity (Created_by, Updated_by, Deleted_by)
      */
     use Creation;
+
+    use Sluggable;
+
+    use SoftDeletes;
+
+    use Commentable;
 
     /**
      * {@inheritDoc}
@@ -30,11 +40,14 @@ class BlogPost extends Model
      */
     protected static $categoryModel = 'jlourenco\blog\Models\BlogCategory';
 
+    protected $dates = [ 'created_at', 'deleted_at'];
+
     /**
      * {@inheritDoc}
      */
     protected $fillable = [
         'title',
+        'slug',
         'contents',
         'category',
         'author',
@@ -95,5 +108,22 @@ class BlogPost extends Model
     {
         return $this->belongsTo(static::$categoryModel, 'category');
     }
+
+    /**
+     * Get the user's first name.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public function getCreatedByAttribute($value)
+    {
+        if ($value > 0)
+            if ($user = Sentinel::findUserById($value))
+                if ($user != null)
+                    return $user->first_name . ' ' . $user->last_name;
+
+        return $value;
+    }
+
 
 }
