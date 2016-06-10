@@ -2,6 +2,7 @@
     "name": "jlourenco/blog",
     "type": "library",
     "description": "This module adds a ready to use blog to your website.",
+    "version": "0.1.3.2",
     "keywords": [
         "jlourenco",
         "blog"
