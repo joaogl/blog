@@ -17,7 +17,7 @@
         }
     ],
     "require": {
-        "jlourenco/base" : "0.1.*"
+        "jlourenco/base" : "0.1.*",
         "jlourenco/comments" : "0.1.*"
     },
     "require-dev": {
